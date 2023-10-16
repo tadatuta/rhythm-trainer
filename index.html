@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        font-family: sans-serif;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 50% 50%;
+    }
+
+    .cell {
+        line-height: 180px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 80px;
+    }
+
+    .lh, .lf {
+        transform: scale(-1, 1);
+    }
+
+    .active {
+        font-size: 120px;
+    }
+
+    .controls div {
+        margin-bottom: 12px;
+    }
+</style>
+<body>
+    <div class="grid">
+        <div class="cell lh">🤚</div>
+        <div class="cell rh">🤚</div>
+        <div class="cell lf">🦶</div>
+        <div class="cell rf">🦶</div>
+    </div>
+    <div class="controls">
+        <div>
+            <input class="bpm" type="text" value="120">
+            <label><input class="sound" type="checkbox">Звук</label>
+            <label><input type="radio" name="direction" value="left">←</label>
+            <label><input type="radio" name="direction" value="right" checked>→</label>
+        </div>
+        <div>
+            <!-- <div>Круговые: <button value="circleLeft">Влево</button> <button value="circleRight">Вправо</button></div> -->
+            <div><button value="circle">Круговые</button></div>
+        </div>
+        <div>
+            <div>Параллельные: <button value="parralelVertical">Вертикально</button> <button value="parralelHorizontal">Горизонтально</button></div>
+        </div>
+        <div>
+            <div>Перекрестные: <button value="crossBow">Бантики</button> <button value="crossEight">Восьмерки</button></div>
+        </div>
+    </div>
+<!-- 🫱🫲🦶↘︎↖︎↗︎↙︎↓↑←→🤚 -->
+<script>
+(function() {
+    const leftHand = document.querySelector('.lh');
+    const rightHand = document.querySelector('.rh');
+    const leftFoot = document.querySelector('.lf');
+    const rightFoot = document.querySelector('.rf');
+    const bpmInput = document.querySelector('.bpm');
+    const soundCheckbox = document.querySelector('.sound');
+    const directionRadio = document.querySelector('[name="direction"]');
+
+    const types = {
+        circle: [leftHand, leftFoot, rightFoot, rightHand],
+        parralelVertical: [leftHand, leftFoot, rightHand, rightFoot],
+        parralelHorizontal: [leftHand, rightHand, leftFoot, rightFoot],
+        crossBow: [leftHand, leftFoot, rightHand, rightFoot],
+        crossEight: [leftHand, rightHand, leftFoot, rightFoot]
+    };
+
+    const min = 60 * 1000;
+
+    let intervalId;
+    let currentType;
+
+    function start(type) {
+        currentType = type;
+
+        let counter = 0;
+        let bpm = bpmInput.value;
+        const dir = directionRadio.checked ? 1 : -1;
+
+        clearInterval(intervalId);
+        intervalId = setInterval(() => {
+            document.querySelector('.active')?.classList.remove('active');
+
+            const typeSeq = types[type];
+            typeSeq[counter].classList.add('active');
+
+            soundCheckbox.checked && beep(100, 399, counter === 0 ? 100 : 40);
+
+            counter += dir;
+            if (counter === 4) {
+                counter = 0;
+            }
+
+            if (counter === -1) {
+                counter = 3;
+            }
+        }, min / bpm);
+    }
+
+    document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            start(e.target.value);
+        });
+    });
+
+    bpmInput.addEventListener('input', (e) => {
+        if (intervalId) {
+            start(currentType);
+        }
+    });
+
+    document.querySelectorAll('[name="direction"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            start(currentType);
+        });
+    });
+})();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// The browser will limit the number of concurrent audio contexts
+// So be sure to re-use them whenever you can
+const myAudioContext = new AudioContext();
+
+/**
+ * Helper function to emit a beep sound in the browser using the Web Audio API.
+ *
+ * @param {number} duration - The duration of the beep sound in milliseconds.
+ * @param {number} frequency - The frequency of the beep sound.
+ * @param {number} volume - The volume of the beep sound.
+ *
+ * @returns {Promise} - A promise that resolves when the beep sound is finished.
+ */
+function beep(duration, frequency, volume){
+    return new Promise((resolve, reject) => {
+        // Set default duration if not provided
+        duration = duration || 200;
+        frequency = frequency || 440;
+        volume = volume || 100;
+
+        try{
+            let oscillatorNode = myAudioContext.createOscillator();
+            let gainNode = myAudioContext.createGain();
+            oscillatorNode.connect(gainNode);
+
+            // Set the oscillator frequency in hertz
+            oscillatorNode.frequency.value = frequency;
+
+            // Set the type of oscillator
+            oscillatorNode.type= "square";
+            gainNode.connect(myAudioContext.destination);
+
+            // Set the gain to the volume
+            gainNode.gain.value = volume * 0.01;
+
+            // Start audio with the desired duration
+            oscillatorNode.start(myAudioContext.currentTime);
+            oscillatorNode.stop(myAudioContext.currentTime + duration * 0.001);
+
+            // Resolve the promise when the sound is finished
+            oscillatorNode.onended = () => {
+                resolve();
+            };
+        }catch(error){
+            reject(error);
+        }
+    });
+}
+</script>
+</body>
+</html>
