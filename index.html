@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Rhythm trainer</title>
 </head>
 <style>
     body {
@@ -33,6 +33,18 @@
     .controls div {
         margin-bottom: 12px;
     }
+
+    .types,
+    .types button {
+        font-size: 24px;
+        line-height: 32px;
+        padding: 6px 12px;
+    }
+
+    ol, li {
+        margin: 0;
+        padding: 0;
+    }
 </style>
 <body>
     <div class="grid">
@@ -43,22 +55,23 @@
     </div>
     <div class="controls">
         <div>
-            <input class="bpm" type="text" value="120">
-            <label><input class="sound" type="checkbox">Звук</label>
+            <input class="bpm" type="text" value="120">BPM
+            <label><input class="sound" type="checkbox">metronome</label>
+        </div>
+        <div class="types">
+            <button value="circle">○</button>
+            <button value="parralelVertical">||</button>
+            <button value="parralelHorizontal">=</button>
+            <button value="crossBow">⋈</button>
+            <button value="crossEight">8</button>
             <label><input type="radio" name="direction" value="left">←</label>
             <label><input type="radio" name="direction" value="right" checked>→</label>
         </div>
-        <div>
-            <!-- <div>Круговые: <button value="circleLeft">Влево</button> <button value="circleRight">Вправо</button></div> -->
-            <div><button value="circle">Круговые</button></div>
-        </div>
-        <div>
-            <div>Параллельные: <button value="parralelVertical">Вертикально</button> <button value="parralelHorizontal">Горизонтально</button></div>
-        </div>
-        <div>
-            <div>Перекрестные: <button value="crossBow">Бантики</button> <button value="crossEight">Восьмерки</button></div>
-        </div>
     </div>
+    <ol class="stat">
+
+    </ol>
+    <div class="timer"></div>
 <!-- 🫱🫲🦶↘︎↖︎↗︎↙︎↓↑←→🤚 -->
 <script>
 (function() {
@@ -69,6 +82,8 @@
     const bpmInput = document.querySelector('.bpm');
     const soundCheckbox = document.querySelector('.sound');
     const directionRadio = document.querySelector('[name="direction"]');
+    const statContainer = document.querySelector('.stat');
+    const timerContainer = document.querySelector('.timer');
 
     const types = {
         circle: [leftHand, leftFoot, rightFoot, rightHand],
@@ -81,9 +96,17 @@
     const min = 60 * 1000;
 
     let intervalId;
+    let timerId;
     let currentType;
+    let iterationCount = 0;
+    let iterationTimer = 0;
+    let totalTimer = 0;
 
     function start(type) {
+        if (!type) return;
+
+        addStat();
+
         currentType = type;
 
         let counter = 0;
@@ -102,12 +125,42 @@
             counter += dir;
             if (counter === 4) {
                 counter = 0;
+                iterationCount++;
             }
 
             if (counter === -1) {
                 counter = 3;
+                iterationCount++;
             }
         }, min / bpm);
+    }
+
+    function addStat() {
+        const statElem = document.createElement('li');
+        statContainer.appendChild(statElem);
+        iterationCount = 0;
+        iterationTimer = 0;
+
+        clearTimeout(timerId);
+        tick();
+    }
+
+    function tick() {
+        timerId = setTimeout(() => {
+            iterationTimer++;
+            totalTimer++;
+
+            const items = document.querySelectorAll('.stat li');
+            items[items.length - 1].innerHTML = `${currentType} ${directionRadio.checked ? '←' : '→'}: ${iterationCount}, ${secToMinStr(iterationTimer)}`;
+
+            timerContainer.innerHTML = `Всего времени: ${secToMinStr(totalTimer)}`;
+
+            tick();
+        }, 1000);
+    }
+
+    function secToMinStr(sec) {
+        return `${Math.floor(sec / 60).toString().padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
     }
 
     document.querySelectorAll('button').forEach(button => {
@@ -128,17 +181,6 @@
         });
     });
 })();
-
-
-
-
-
-
-
-
-
-
-
 
 
 
