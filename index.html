@@ -34,16 +34,29 @@
         margin-bottom: 12px;
     }
 
-    .types,
-    .types button {
+    .types button,
+    .random {
+        padding: 6px 12px;
+
         font-size: 24px;
         line-height: 32px;
-        padding: 6px 12px;
     }
 
-    ol, li {
-        margin: 0;
-        padding: 0;
+    button:focus {
+        outline: 5px solid #fc0;
+    }
+
+    input {
+        width: 42px;
+        padding: 6px 12px;
+
+        font-size: 24px;
+        line-height: 32px;
+    }
+
+    .stat,
+    .timer {
+        font-size: 16px;
     }
 </style>
 <body>
@@ -55,7 +68,7 @@
     </div>
     <div class="controls">
         <div>
-            <input class="bpm" type="text" value="120">BPM
+            <input class="bpm" value="120" type="number" step="10">BPM
             <label><input class="sound" type="checkbox">metronome</label>
         </div>
         <div class="types">
@@ -64,9 +77,13 @@
             <button value="parralelHorizontal">=</button>
             <button value="crossBow">⋈</button>
             <button value="crossEight">8</button>
+        </div>
+        <div>
+            <input name="random-seq" value="4"> <button class="random" value="random">🎲</button>
             <label><input type="radio" name="direction" value="left">←</label>
             <label><input type="radio" name="direction" value="right" checked>→</label>
         </div>
+        <div><input name="iterations" value="20"> <label><input type="checkbox" value="auto" checked>auto</label></div>
     </div>
     <ol class="stat">
 
@@ -84,13 +101,15 @@
     const directionRadio = document.querySelector('[name="direction"]');
     const statContainer = document.querySelector('.stat');
     const timerContainer = document.querySelector('.timer');
+    const autoCheckbox = document.querySelector('input[value="auto"]');
 
     const types = {
         circle: [leftHand, leftFoot, rightFoot, rightHand],
         parralelVertical: [leftHand, leftFoot, rightHand, rightFoot],
         parralelHorizontal: [leftHand, rightHand, leftFoot, rightFoot],
-        crossBow: [leftHand, leftFoot, rightHand, rightFoot],
-        crossEight: [leftHand, rightHand, leftFoot, rightFoot]
+        crossBow: [leftHand, rightFoot, rightHand, leftFoot ],
+        crossEight: [leftFoot, rightHand, leftHand, rightFoot],
+        random: null
     };
 
     const min = 60 * 1000;
@@ -104,6 +123,7 @@
 
     function start(type) {
         if (!type) return;
+        beep(300, 50, 100);
 
         addStat();
 
@@ -113,11 +133,12 @@
         let bpm = bpmInput.value;
         const dir = directionRadio.checked ? 1 : -1;
 
+        const typeSeq = types[type] || getRandomSeq();
+
         clearInterval(intervalId);
         intervalId = setInterval(() => {
             document.querySelector('.active')?.classList.remove('active');
 
-            const typeSeq = types[type];
             typeSeq[counter].classList.add('active');
 
             soundCheckbox.checked && beep(100, 399, counter === 0 ? 100 : 40);
@@ -131,6 +152,14 @@
             if (counter === -1) {
                 counter = 3;
                 iterationCount++;
+            }
+
+            if (autoCheckbox.checked && iterationCount >= Number(document.querySelector('[name="iterations"]').value) + 1) {
+                const type = Object.keys(types)[getRandomInt(0, Object.keys(types).length - 1)];
+                document.querySelectorAll('[name="direction"]')[getRandomInt(0, 1)].checked = true;
+
+                document.querySelector(`button[value="${type}"]`).focus();
+                start(type);
             }
         }, min / bpm);
     }
@@ -153,10 +182,28 @@
             const items = document.querySelectorAll('.stat li');
             items[items.length - 1].innerHTML = `${currentType} ${directionRadio.checked ? '←' : '→'}: ${iterationCount}, ${secToMinStr(iterationTimer)}`;
 
-            timerContainer.innerHTML = `Всего времени: ${secToMinStr(totalTimer)}`;
+            timerContainer.innerHTML = `Total time: ${secToMinStr(totalTimer)}`;
 
             tick();
         }, 1000);
+    }
+
+    function getRandomSeq(length) {
+        if (!length) {
+            length = document.querySelector('[name="random-seq"]').value;
+        }
+
+        const seq = [];
+
+        for (let i = 0; i < length; i++) {
+            seq.push(types.circle[getRandomInt(0, 3)]);
+        }
+
+        return seq;
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function secToMinStr(sec) {
