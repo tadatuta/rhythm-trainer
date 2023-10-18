@@ -183,6 +183,8 @@
 
                 document.querySelector('button.current').classList.remove('current');
                 document.querySelector(`button[value="${type}"]`).classList.add('current');
+
+                selectCell(typeSeq, getRandomInt(0, 3));
                 start(type);
             }
         }, min / bpm);
@@ -246,9 +248,16 @@
     document.querySelector('.grid').addEventListener('click', (e) => {
         const cells = currentType ? types[currentType] : Array.from(grid.children);
         startCellIdx = cells.indexOf(e.target.parentElement);
-        document.querySelector('.cell.strong').classList.remove('strong');
-        cells[startCellIdx].classList.add('strong');
+        if (startCellIdx === -1) {
+            startCellIdx = 0;
+        }
+        selectCell(cells, startCellIdx);
     });
+
+    function selectCell(cells, idx) {
+        document.querySelector('.cell.strong').classList.remove('strong');
+        cells[idx].classList.add('strong');
+    }
 
     bpmInput.addEventListener('input', (e) => {
         if (intervalId) {
