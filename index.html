@@ -151,11 +151,13 @@
 
         const typeSeq = types[type] || getRandomSeq();
         startCellIdx = typeSeq.indexOf(document.querySelector('.cell.strong'));
-        let counter = startCellIdx;
+
         console.log('!!! startCellIdx', startCellIdx);
         if (startCellIdx === -1) {
             startCellIdx = typeSeq.indexOf(document.querySelector('.lh'));
         }
+
+        let counter = startCellIdx;
 
         clearInterval(intervalId);
         intervalId = setInterval(() => {
