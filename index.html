@@ -20,6 +20,19 @@
         text-align: center;
         vertical-align: middle;
         font-size: 80px;
+        cursor: pointer;
+    }
+
+    span.strong {
+        display: none;
+    }
+
+    .strong .week {
+        display: none;
+    }
+
+    .strong .strong {
+        display: inline;
     }
 
     .lh, .lf {
@@ -47,7 +60,7 @@
     }
 
     input {
-        width: 42px;
+        width: 62px;
         padding: 6px 12px;
 
         font-size: 24px;
@@ -61,10 +74,10 @@
 </style>
 <body>
     <div class="grid">
-        <div class="cell lh">🤚</div>
-        <div class="cell rh">🤚</div>
-        <div class="cell lf">🦶</div>
-        <div class="cell rf">🦶</div>
+        <div class="cell lh strong"><span class="week">🤚🏻</span><span class="strong">🤚</span></div>
+        <div class="cell rh"><span class="week">🤚🏻</span><span class="strong">🤚</span></div>
+        <div class="cell lf"><span class="week">🦶🏻</span><span class="strong">🦶</span></div>
+        <div class="cell rf"><span class="week">🦶🏻</span><span class="strong">🦶</span></div>
     </div>
     <div class="controls">
         <div>
@@ -89,9 +102,10 @@
 
     </ol>
     <div class="timer"></div>
-<!-- 🫱🫲🦶↘︎↖︎↗︎↙︎↓↑←→🤚 -->
+<!-- 🫱🫲🦶↘︎↖︎↗︎↙︎↓↑←→🤚 🤚🏻🤚🤚🏼🤚🏽🤚🏾🤚🏿 🦶🏻🦶🏼🦶🏽🦶🏾🦶🏿  -->
 <script>
 (function() {
+    const grid = document.querySelector('.grid');
     const leftHand = document.querySelector('.lh');
     const rightHand = document.querySelector('.rh');
     const leftFoot = document.querySelector('.lf');
@@ -107,7 +121,7 @@
         circle: [leftHand, leftFoot, rightFoot, rightHand],
         parralelVertical: [leftHand, leftFoot, rightHand, rightFoot],
         parralelHorizontal: [leftHand, rightHand, leftFoot, rightFoot],
-        crossBow: [leftHand, rightFoot, rightHand, leftFoot ],
+        crossBow: [leftHand, rightFoot, rightHand, leftFoot ], /* todo: перекрестные всегда стартуют накрест */
         crossEight: [leftFoot, rightHand, leftHand, rightFoot],
         random: null
     };
@@ -120,6 +134,7 @@
     let iterationCount = 0;
     let iterationTimer = 0;
     let totalTimer = 0;
+    let startCellIdx = 0;
 
     function start(type) {
         if (!type) return;
@@ -129,11 +144,16 @@
 
         currentType = type;
 
-        let counter = 0;
         let bpm = bpmInput.value;
         const dir = directionRadio.checked ? 1 : -1;
 
         const typeSeq = types[type] || getRandomSeq();
+        startCellIdx = typeSeq.indexOf(document.querySelector('.cell.strong'));
+        let counter = startCellIdx;
+        console.log('!!! startCellIdx', startCellIdx);
+        if (startCellIdx === -1) {
+            startCellIdx = typeSeq.indexOf(document.querySelector('.lh'));
+        }
 
         clearInterval(intervalId);
         intervalId = setInterval(() => {
@@ -141,7 +161,7 @@
 
             typeSeq[counter].classList.add('active');
 
-            soundCheckbox.checked && beep(100, 399, counter === 0 ? 100 : 40);
+            soundCheckbox.checked && beep(100, counter === startCellIdx ? 199 : 399, counter === startCellIdx ? 100 : 40);
 
             counter += dir;
             if (counter === 4) {
@@ -214,6 +234,17 @@
         button.addEventListener('click', (e) => {
             start(e.target.value);
         });
+    });
+
+    document.querySelector('.grid').addEventListener('click', (e) => {
+        const cells = currentType ? types[currentType] : Array.from(grid.children);
+        startCellIdx = cells.indexOf(e.target.parentElement);
+        document.querySelector('.cell.strong').classList.remove('strong');
+        console.log('e.target', e.target);
+        console.log('cells', cells)
+        console.log('startCellIdx', startCellIdx)
+        console.log('cells[startCellIdx]', cells[startCellIdx])
+        cells[startCellIdx].classList.add('strong');
     });
 
     bpmInput.addEventListener('input', (e) => {
