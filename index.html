@@ -55,8 +55,8 @@
         line-height: 32px;
     }
 
-    button:focus {
-        outline: 5px solid #fc0;
+    button.current {
+        background-color: #fc0;
     }
 
     [name="bpm"],
@@ -140,7 +140,7 @@
 
     function start(type) {
         if (!type) return;
-        beep(300, 50, 100);
+        soundCheckbox.checked && beep(300, 50, 100);
 
         addStat();
 
@@ -152,7 +152,6 @@
         const typeSeq = types[type] || getRandomSeq();
         startCellIdx = typeSeq.indexOf(document.querySelector('.cell.strong'));
 
-        console.log('!!! startCellIdx', startCellIdx);
         if (startCellIdx === -1) {
             startCellIdx = typeSeq.indexOf(document.querySelector('.lh'));
         }
@@ -182,7 +181,8 @@
                 const type = Object.keys(types)[getRandomInt(0, Object.keys(types).length - 1)];
                 document.querySelectorAll('[name="direction"]')[getRandomInt(0, 1)].checked = true;
 
-                document.querySelector(`button[value="${type}"]`).focus();
+                document.querySelector('button.current').classList.remove('current');
+                document.querySelector(`button[value="${type}"]`).classList.add('current');
                 start(type);
             }
         }, min / bpm);
@@ -236,7 +236,10 @@
 
     document.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', (e) => {
+            document.querySelector('button.current')?.classList.remove('current');
+
             start(e.target.value);
+            e.target.classList.add('current');
         });
     });
 
@@ -244,10 +247,6 @@
         const cells = currentType ? types[currentType] : Array.from(grid.children);
         startCellIdx = cells.indexOf(e.target.parentElement);
         document.querySelector('.cell.strong').classList.remove('strong');
-        console.log('e.target', e.target);
-        console.log('cells', cells)
-        console.log('startCellIdx', startCellIdx)
-        console.log('cells[startCellIdx]', cells[startCellIdx])
         cells[startCellIdx].classList.add('strong');
     });
 
