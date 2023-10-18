@@ -59,7 +59,9 @@
         outline: 5px solid #fc0;
     }
 
-    input {
+    [name="bpm"],
+    [name="random-seq"],
+    [name="iterations"] {
         width: 62px;
         padding: 6px 12px;
 
@@ -81,7 +83,7 @@
     </div>
     <div class="controls">
         <div>
-            <input class="bpm" value="120" type="number" step="10">BPM
+            <input name="bpm" value="120" type="number" step="10">BPM
             <label><input class="sound" type="checkbox">metronome</label>
         </div>
         <div class="types">
@@ -92,11 +94,11 @@
             <button value="crossEight">8</button>
         </div>
         <div>
-            <input name="random-seq" value="4"> <button class="random" value="random">🎲</button>
+            <input name="random-seq" value="4" type="number"> <button class="random" value="random">🎲</button>
             <label><input type="radio" name="direction" value="left">←</label>
             <label><input type="radio" name="direction" value="right" checked>→</label>
         </div>
-        <div><input name="iterations" value="20"> <label><input type="checkbox" value="auto" checked>auto</label></div>
+        <div><input name="iterations" value="20" type="number" step="5"> <label><input type="checkbox" value="auto" checked>auto</label></div>
     </div>
     <ol class="stat">
 
@@ -110,7 +112,7 @@
     const rightHand = document.querySelector('.rh');
     const leftFoot = document.querySelector('.lf');
     const rightFoot = document.querySelector('.rf');
-    const bpmInput = document.querySelector('.bpm');
+    const bpmInput = document.querySelector('[name="bpm"]');
     const soundCheckbox = document.querySelector('.sound');
     const directionRadio = document.querySelector('[name="direction"]');
     const statContainer = document.querySelector('.stat');
