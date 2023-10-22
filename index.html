@@ -83,7 +83,7 @@
     </div>
     <div class="controls">
         <div>
-            <input name="bpm" value="120" type="number" step="10">BPM
+            <input name="bpm" value="30" type="number" step="10">BPM
             <label><input class="sound" type="checkbox">metronome</label>
         </div>
         <div class="types">
@@ -104,27 +104,52 @@
 
     </ol>
     <div class="timer"></div>
-<!-- 🫱🫲🦶↘︎↖︎↗︎↙︎↓↑←→🤚 🤚🏻🤚🤚🏼🤚🏽🤚🏾🤚🏿 🦶🏻🦶🏼🦶🏽🦶🏾🦶🏿  -->
 <script>
 (function() {
     const grid = document.querySelector('.grid');
+    const cells = Array.from(grid.children);
     const leftHand = document.querySelector('.lh');
     const rightHand = document.querySelector('.rh');
     const leftFoot = document.querySelector('.lf');
     const rightFoot = document.querySelector('.rf');
     const bpmInput = document.querySelector('[name="bpm"]');
     const soundCheckbox = document.querySelector('.sound');
-    const directionRadio = document.querySelector('[name="direction"]');
+    const directionRadio = document.querySelector('[name="direction"][value="right"]');
     const statContainer = document.querySelector('.stat');
     const timerContainer = document.querySelector('.timer');
     const autoCheckbox = document.querySelector('input[value="auto"]');
 
     const types = {
-        circle: [leftHand, leftFoot, rightFoot, rightHand],
-        parralelVertical: [leftHand, leftFoot, rightHand, rightFoot],
-        parralelHorizontal: [leftHand, rightHand, leftFoot, rightFoot],
-        crossBow: [leftHand, rightFoot, rightHand, leftFoot ], /* todo: перекрестные всегда стартуют накрест */
-        crossEight: [leftFoot, rightHand, leftHand, rightFoot],
+        circle: [
+            [leftHand, rightHand, rightFoot, leftFoot],
+            [rightHand, rightFoot, leftFoot, leftHand],
+            [leftFoot, leftHand, rightHand, rightFoot],
+            [rightFoot, leftFoot, leftHand, rightHand]
+        ],
+        parralelVertical: [
+            [leftHand, leftFoot, rightHand, rightFoot],
+            [rightHand, rightFoot, leftHand, leftFoot],
+            [leftFoot, leftHand, rightFoot, rightHand],
+            [rightFoot, rightHand, leftFoot, leftHand]
+        ],
+        parralelHorizontal: [
+            [leftHand, rightHand, leftFoot, rightFoot],
+            [rightHand, leftHand, rightFoot, leftFoot],
+            [leftFoot, rightFoot, leftHand, rightHand],
+            [rightFoot, leftFoot, rightHand, leftHand]
+        ],
+        crossBow: [
+            [leftHand, rightFoot, rightHand, leftFoot],
+            [rightHand, leftFoot, leftHand, rightFoot],
+            [leftFoot, rightHand, rightFoot, leftHand],
+            [rightFoot, leftHand, leftFoot, rightHand]
+        ],
+        crossEight: [
+            [leftHand, rightFoot, leftFoot, rightHand],
+            [rightHand, leftFoot, rightFoot, leftHand],
+            [leftFoot, rightHand, leftHand, rightFoot],
+            [rightFoot, leftHand, rightHand, leftFoot]
+        ],
         random: null
     };
 
@@ -132,11 +157,11 @@
 
     let intervalId;
     let timerId;
-    let currentType;
+    let currentType = 'circle';
     let iterationCount = 0;
     let iterationTimer = 0;
     let totalTimer = 0;
-    let startCellIdx = 0;
+    let strongCell = 0;
 
     function start(type) {
         if (!type) return;
@@ -149,14 +174,9 @@
         let bpm = bpmInput.value;
         const dir = directionRadio.checked ? 1 : -1;
 
-        const typeSeq = types[type] || getRandomSeq();
-        startCellIdx = typeSeq.indexOf(document.querySelector('.cell.strong'));
+        const typeSeq = types[currentType] ? types[currentType][strongCell] : getRandomSeq();
 
-        if (startCellIdx === -1) {
-            startCellIdx = typeSeq.indexOf(document.querySelector('.lh'));
-        }
-
-        let counter = startCellIdx;
+        let counter = 0;
 
         clearInterval(intervalId);
         intervalId = setInterval(() => {
@@ -164,7 +184,13 @@
 
             typeSeq[counter].classList.add('active');
 
-            soundCheckbox.checked && beep(100, counter === startCellIdx ? 199 : 399, counter === startCellIdx ? 100 : 40);
+            if (soundCheckbox.checked) {
+                if (counter === 0) {
+                    beep(100, 199, 100);
+                } else if (bpm < 60 && counter !== 0) {
+                    beep(100, 399, 40);
+                }
+            }
 
             counter += dir;
             if (counter === 4) {
@@ -187,7 +213,7 @@
                 selectCell(typeSeq, getRandomInt(0, 3));
                 start(type);
             }
-        }, min / bpm);
+        }, min / (bpm * 4));
     }
 
     function addStat() {
@@ -206,7 +232,7 @@
             totalTimer++;
 
             const items = document.querySelectorAll('.stat li');
-            items[items.length - 1].innerHTML = `${currentType} ${directionRadio.checked ? '←' : '→'}: ${iterationCount}, ${secToMinStr(iterationTimer)}`;
+            items[items.length - 1].innerHTML = `${currentType} ${directionRadio.checked ? '→' : '←'}: ${iterationCount}, ${secToMinStr(iterationTimer)}`;
 
             timerContainer.innerHTML = `Total time: ${secToMinStr(totalTimer)}`;
 
@@ -219,10 +245,11 @@
             length = document.querySelector('[name="random-seq"]').value;
         }
 
-        const seq = [];
+        const etalonSeq = types.parralelHorizontal[0];
+        const seq = [etalonSeq[strongCell]];
 
-        for (let i = 0; i < length; i++) {
-            seq.push(types.circle[getRandomInt(0, 3)]);
+        for (let i = 1; i < length; i++) {
+            seq.push(etalonSeq[getRandomInt(0, 3)]);
         }
 
         return seq;
@@ -246,12 +273,11 @@
     });
 
     document.querySelector('.grid').addEventListener('click', (e) => {
-        const cells = currentType ? types[currentType] : Array.from(grid.children);
-        startCellIdx = cells.indexOf(e.target.parentElement);
-        if (startCellIdx === -1) {
-            startCellIdx = 0;
-        }
-        selectCell(cells, startCellIdx);
+        if (!e.target.parentElement.classList.contains('cell')) return;
+
+        strongCell = cells.indexOf(e.target.parentElement);
+        selectCell(cells, strongCell);
+        start(currentType);
     });
 
     function selectCell(cells, idx) {
