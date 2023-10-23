@@ -69,6 +69,12 @@
         line-height: 32px;
     }
 
+    [name="volume"] {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+    }
+
     .stat,
     .timer {
         font-size: 16px;
@@ -85,6 +91,7 @@
         <div>
             <input name="bpm" value="30" type="number" step="10">BPM
             <label><input class="sound" type="checkbox">metronome</label>
+            <input name="volume" type="range" value="100">
         </div>
         <div class="types">
             <button value="circle">○</button>
@@ -114,6 +121,7 @@
     const rightFoot = document.querySelector('.rf');
     const bpmInput = document.querySelector('[name="bpm"]');
     const soundCheckbox = document.querySelector('.sound');
+    const volumeRange = document.querySelector('[name="volume"]');
     const directionRadio = document.querySelector('[name="direction"][value="right"]');
     const statContainer = document.querySelector('.stat');
     const timerContainer = document.querySelector('.timer');
@@ -165,7 +173,7 @@
 
     function start(type) {
         if (!type) return;
-        soundCheckbox.checked && beep(300, 50, 100);
+        soundCheckbox.checked && beep(300, 50, volumeRange.value);
 
         addStat();
 
@@ -186,9 +194,9 @@
 
             if (soundCheckbox.checked) {
                 if (counter === 0) {
-                    beep(100, 199, 100);
+                    beep(100, 199, volumeRange.value);
                 } else if (bpm < 60 && counter !== 0) {
-                    beep(100, 399, 40);
+                    beep(100, 399, volumeRange.value / 2);
                 }
             }
 
