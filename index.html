@@ -89,7 +89,7 @@
     </div>
     <div class="controls">
         <div>
-            <input name="bpm" value="45" type="number" step="10">BPM
+            <input name="bpm" value="50" type="number" step="10">BPM
             <label><input class="sound" type="checkbox" checked>metronome</label>
             <input name="volume" type="range" value="20">
         </div>
@@ -190,6 +190,7 @@
         const dir = directionRadio.checked ? 1 : -1;
 
         const typeSeq = types[currentType] ? types[currentType][strongCell] : getRandomSeq();
+        selectCell(strongCell);
 
         let counter = 0;
 
@@ -219,8 +220,8 @@
             }
 
             if (autoCheckbox.checked && iterationCount >= Number(document.querySelector('[name="iterations"]').value) + 1) {
-                const randomOnly = randomOnlyCheckbox.value;
-                const shouldSwitchToRandom = shouldSwitchToRandomCheckbox.value;
+                const randomOnly = randomOnlyCheckbox.checked;
+                const shouldSwitchToRandom = shouldSwitchToRandomCheckbox.checked;
                 let typeNames = Object.keys(types);
                 if (shouldSwitchToRandom) {
                     typeNames.push('random');
@@ -240,7 +241,6 @@
                 document.querySelector(`button[value="${type}"]`).classList.add('current');
 
                 strongCell = getRandomInt(0, 3);
-                selectCell(typeSeq, strongCell);
                 start(type);
             }
         }, min / (bpm * 4));
@@ -306,11 +306,10 @@
         if (!e.target.parentElement.classList.contains('cell')) return;
 
         strongCell = cells.indexOf(e.target.parentElement);
-        selectCell(cells, strongCell);
         start(currentType);
     });
 
-    function selectCell(cells, idx) {
+    function selectCell(idx) {
         document.querySelector('.cell.strong').classList.remove('strong');
         cells[idx].classList.add('strong');
     }
