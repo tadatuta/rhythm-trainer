@@ -89,9 +89,9 @@
     </div>
     <div class="controls">
         <div>
-            <input name="bpm" value="30" type="number" step="10">BPM
-            <label><input class="sound" type="checkbox">metronome</label>
-            <input name="volume" type="range" value="100">
+            <input name="bpm" value="45" type="number" step="10">BPM
+            <label><input class="sound" type="checkbox" checked>metronome</label>
+            <input name="volume" type="range" value="20">
         </div>
         <div class="types">
             <button value="circle">○</button>
@@ -105,7 +105,12 @@
             <label><input type="radio" name="direction" value="left">←</label>
             <label><input type="radio" name="direction" value="right" checked>→</label>
         </div>
-        <div><input name="iterations" value="20" type="number" step="5"> <label><input type="checkbox" value="auto" checked>auto</label></div>
+        <div>
+            <input name="iterations" value="20" type="number" step="5"> <label><input name="auto" type="checkbox" value="auto" checked>Automatically change type</label><br/>
+            <label><input name="shouldSetRandomDirection" type="checkbox">Auto change direction</label><br/>
+            <label><input name="randomOnly" type="checkbox">Random only</label><br/>
+            <label><input name="shouldSwitchToRandom" type="checkbox">Include random</label>
+        </div>
     </div>
     <ol class="stat">
 
@@ -125,7 +130,10 @@
     const directionRadio = document.querySelector('[name="direction"][value="right"]');
     const statContainer = document.querySelector('.stat');
     const timerContainer = document.querySelector('.timer');
-    const autoCheckbox = document.querySelector('input[value="auto"]');
+    const autoCheckbox = document.querySelector('[name="auto"]');
+    const randomOnlyCheckbox = document.querySelector('[name="randomOnly"]');
+    const shouldSwitchToRandomCheckbox = document.querySelector('[name="shouldSwitchToRandom"]');
+    const shouldSetRandomDirectionCheckbox = document.querySelector('[name="shouldSetRandomDirection"]');
 
     const types = {
         circle: [
@@ -157,8 +165,7 @@
             [rightHand, leftFoot, rightFoot, leftHand],
             [leftFoot, rightHand, leftHand, rightFoot],
             [rightFoot, leftHand, rightHand, leftFoot]
-        ],
-        random: null
+        ]
     };
 
     const min = 60 * 1000;
@@ -212,13 +219,28 @@
             }
 
             if (autoCheckbox.checked && iterationCount >= Number(document.querySelector('[name="iterations"]').value) + 1) {
-                const type = Object.keys(types)[getRandomInt(0, Object.keys(types).length - 1)];
-                document.querySelectorAll('[name="direction"]')[getRandomInt(0, 1)].checked = true;
+                const randomOnly = randomOnlyCheckbox.value;
+                const shouldSwitchToRandom = shouldSwitchToRandomCheckbox.value;
+                let typeNames = Object.keys(types);
+                if (shouldSwitchToRandom) {
+                    typeNames.push('random');
+                }
+                if (randomOnly) {
+                    typeNames = ['random'];
+                }
+
+                const type = typeNames[getRandomInt(0, typeNames.length - 1)];
+
+                const shouldSetRandomDirection = shouldSetRandomDirectionCheckbox.value;
+                if (shouldSetRandomDirection) {
+                    document.querySelectorAll('[name="direction"]')[getRandomInt(0, 1)].checked = true;
+                }
 
                 document.querySelector('button.current').classList.remove('current');
                 document.querySelector(`button[value="${type}"]`).classList.add('current');
 
-                selectCell(typeSeq, getRandomInt(0, 3));
+                strongCell = getRandomInt(0, 3);
+                selectCell(typeSeq, strongCell);
                 start(type);
             }
         }, min / (bpm * 4));
