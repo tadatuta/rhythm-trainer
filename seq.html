@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drum Sequence</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        td {
+            max-width: 5%;
+            height: 5%;
+            text-align: center;
+        }
+
+        td:nth-child(4n) {
+            border-right: 1px solid #000;
+        }
+
+        button {
+            display: block;
+            margin: 24px auto;
+        }
+    </style>
+</head>
+<body>
+    <table></table>
+    <button>Generate</button>
+    <script>
+        const table = document.querySelector('table');
+        const button = document.querySelector('button');
+        button.addEventListener('click', e => {
+            e.preventDefault();
+            render();
+        });
+        button.focus();
+
+        render();
+
+        function render() {
+            let html = '<tr>';
+
+            const seq = getSeq();
+
+            const hands = getHands(seq);
+
+            for (let i = 0; i < seq.length; i++) {
+                html += `<td>${hands[i] || ' '}</td>`;
+            }
+
+            html += '</tr><tr>';
+
+            for (let i = 0; i < seq.length; i++) {
+                html += `<td>${seq[i]}</td>`;
+            }
+
+            table.innerHTML = html + '</tr>';
+        }
+
+        /*
+            1. Найти первую бочку
+            2. От нее найти количество одинаковых подряд sameInARow
+            3. Понять, какой дальше идет переход: const transition = getTransition();
+            4. Вернуться и добить айтемы до первой бочки
+        */
+        function getHands(seq) {
+            const hands = [];
+            const drumsBeforeFirstBass = seq.indexOf('B');
+            let sameInARow = 0;
+            let pointer = 0;
+
+            let prev = undefined;
+            let next = undefined;
+
+            while (pointer < seq.length) {
+                sameInARow = 0;
+
+                const nextBassPos = seq.indexOf('B', pointer);
+                if (nextBassPos === -1) {
+                    if (hands[pointer - 1]) {
+                        for (let i = pointer; i < seq.length; i++) {
+                            hands[i] = hands[i - 1] === 'L' ? 'R' : 'L';
+                        }
+                    }
+
+                    break;
+                }
+
+                if (hands[pointer - 1]) {
+                    for (let i = pointer; i < nextBassPos; i++) {
+                        hands[i] = hands[i - 1] === 'L' ? 'R' : 'L';
+                    }
+                }
+
+                pointer = nextBassPos + 1;
+                while(seq[pointer] === 'B') {
+                    pointer += 1;
+                }
+
+                prev = undefined;
+                next = undefined;
+
+                for (let i = pointer; i < seq.length; i++) {
+                    const current = seq[i];
+
+                    if (current === 'B') {
+                        break;
+                    }
+
+                    if (current === prev) {
+                        sameInARow++;
+                        continue;
+                    }
+
+                    if (prev === undefined) {
+                        prev = current;
+                    } else {
+                        next = current;
+                        break;
+                    }
+                }
+
+                const transition = getTransition(seq[pointer], next);
+                const dir = transition * (sameInARow % 2 ? 1 : -1);
+                hands[pointer] = dir > 0 ? 'R' : 'L';
+
+                pointer++;
+            }
+
+            for (let i = 0; i < drumsBeforeFirstBass; i++) {
+                hands[i] = hands[i === 0 ? (hands.length - 1) : (i - 1)] === 'L' ? 'R' : 'L';
+            }
+
+            return hands;
+        }
+
+        function getTransition(prev, cur) {
+            // переход между томами
+            if (!isNaN(prev) && !isNaN(cur)) {
+                return cur - prev;
+            }
+
+            // переход с малого на том
+            if (isNaN(prev)) {
+                return 1;
+            }
+
+            // переход с тома на малый
+            return -1;
+        }
+
+        function getSeq() {
+            let totalSeq = [];
+
+            for (let i = 0; i < 4; i++) {
+                totalSeq = totalSeq.concat(getQuarterSeq());
+            }
+
+            function getQuarterSeq() {
+                const SEQ_LENGTH = 4;
+                const seq = new Array(SEQ_LENGTH);
+                let variousDrumsInSeq = new Set();
+                let prevDrum;
+
+                fillInBass(seq);
+
+                for (let pos = 0; pos < seq.length; pos++) {
+                    while(seq[pos] !== undefined) {
+                        pos++;
+                    }
+
+                    if (pos < SEQ_LENGTH) {
+                        if (variousDrumsInSeq.size < 2) {
+                            seq[pos] = getRandomDrum();
+                            prevDrum = seq[pos];
+                            variousDrumsInSeq.add(prevDrum);
+                        } else {
+                            seq[pos] = prevDrum;
+                        }
+                    }
+                }
+
+                return seq;
+            }
+
+            function fillInBass(seq) {
+                const bassBeatNumber = getRandomInt(1, 2);
+
+                for (let i = 0; i < bassBeatNumber; i++) {
+                    let bassPosition = getRandomInt(0, 3);
+
+                    while(seq[bassPosition] !== undefined || (
+                        bassPosition === 0 && totalSeq[totalSeq.length - 1] === 'B'
+                    )) {
+                        bassPosition = getRandomInt(0, 3);
+                    }
+
+                    seq[bassPosition] = 'B';
+                }
+            }
+
+            return totalSeq;
+        }
+
+        function getRandomDrum() {
+            return [1, 2, 3, 'S'][getRandomInt(0, 3)]
+        }
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+    </script>
+</body>
+</html>
